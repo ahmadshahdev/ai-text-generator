@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import "./app.css";
+import "./App.css";
 
 const MODES = [
   { id: "professional", label: "Make it professional" },
@@ -134,7 +134,7 @@ export default function AIWritingCompanion() {
         {/* Input Textarea Container */}
         <div className="relative group">
           <textarea
-            className="min-h-[140px] w-full resize-y rounded-2xl border border-white/10 bg-black/20 p-4 text-[15px] leading-relaxed text-white outline-none backdrop-blur-sm transition-all placeholder:text-slate-400 focus:border-[#7DD3FC] focus:bg-black/30 focus:ring-1 focus:ring-[#7DD3FC] shadow-inner"
+            className="min-h-40 w-full resize-y rounded-2xl border border-white/10 bg-black/20 p-4 text-[15px] leading-relaxed text-white outline-none backdrop-blur-sm transition-all placeholder:text-slate-400 focus:border-[#7DD3FC] focus:bg-black/30 focus:ring-1 focus:ring-[#7DD3FC] shadow-inner"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Paste your text here — an email, a message, a paragraph, anything..."
@@ -172,7 +172,7 @@ export default function AIWritingCompanion() {
 
         {/* Result Area */}
         {(loading || result || error) && (
-          <div className="mt-8 min-h-[120px] rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="mt-8 min-h-30 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#7DD3FC]/80">
               <span className="w-2 h-2 rounded-full bg-[#7DD3FC]"></span>
               {mode === "joke" ? "Random Joke" : (MODES.find(m => m.id === mode)?.label || "Result")}
