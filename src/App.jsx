@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import "./app.css";
+
 const MODES = [
   { id: "professional", label: "Make it professional" },
   { id: "casual",       label: "Make it casual" },
@@ -22,22 +23,20 @@ const MODE_PROMPTS = {
   persuasive:   "Rewrite the following text to be highly persuasive and compelling:",
 };
 
-// List of themes to keep the jokes diverse
 const JOKE_THEMES = [
   "programming", "pixel art", "space travel", "coffee", "dinosaurs", 
   "time travel", "cats", "smartphones", "ocean life", "office work"
 ];
 
-// Grabbing the Gemini key securely from Vite's environment variables
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 function LoadingDots() {
   return (
-    <div className="flex items-center gap-1.5 py-2">
+    <div className="flex items-center gap-1.5 py-3">
       {[0, 1, 2].map((i) => (
         <div 
           key={i} 
-          className="w-2 h-2 rounded-full bg-neutral-500 animate-pulse" 
+          className="w-2.5 h-2.5 rounded-full bg-[#7DD3FC] animate-pulse" 
           style={{ animationDelay: `${i * 0.2}s` }} 
         />
       ))}
@@ -53,7 +52,6 @@ export default function AIWritingCompanion() {
   const [copied, setCopied]         = useState(false);
   const [error, setError]           = useState(null);
 
-  // Helper to call the API (Shared logic for both Transform and Joke features)
   const callGemini = async (promptText) => {
     setLoading(true);
     setResult(null);
@@ -69,7 +67,6 @@ export default function AIWritingCompanion() {
       });
 
       const data = await res.json();
-      
       if (data.error) throw new Error(data.error.message);
       
       const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -81,25 +78,18 @@ export default function AIWritingCompanion() {
     }
   };
 
-  // Logic for the text transformation (needs user input)
   const transform = () => {
     if (!input.trim()) return;
     const fullPrompt = `${MODE_PROMPTS[mode]}\n\n---\n\n${input.trim()}\n\n---\n\nRespond with only the rewritten text. No preamble, no quotes.`;
     callGemini(fullPrompt);
   };
 
-  // Logic for the Joke feature (no input needed, uses random themes)
   const generateJoke = () => {
-    setMode("joke"); // Update the label in the result box
-    
-    // Pick a random theme
+    setMode("joke");
     const randomTheme = JOKE_THEMES[Math.floor(Math.random() * JOKE_THEMES.length)];
-    
-    // Create a dynamic prompt to ensure a fresh response every time
     const dynamicJokePrompt = `Tell me a unique, funny joke about ${randomTheme}. 
     Random Seed: ${Date.now()}. 
     No preamble, no "Sure! Here is a joke", just the joke itself.`;
-    
     callGemini(dynamicJokePrompt);
   };
 
@@ -112,42 +102,58 @@ export default function AIWritingCompanion() {
   }, [result]);
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] p-8 font-sans text-[#e8e8e8]">
-      <div className="mx-auto max-w-2xl pt-6">
+    // Main Wrapper: Deep blue background, custom selection colors
+    <div className="min-h-screen bg-[#082F49] p-4 sm:p-8 font-sans text-slate-100 selection:bg-[#7DD3FC] selection:text-[#082F49] relative">
+      
+      {/* Creator Watermark */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex items-center justify-center rounded-full border border-[#7DD3FC]/30 bg-[#082F49]/80 px-4 py-1.5 text-[11px] sm:text-xs font-semibold tracking-widest text-[#7DD3FC] shadow-lg backdrop-blur-md uppercase">
+        Built by Syed Ahmad Shah
+      </div>
+
+      <div className="mx-auto max-w-2xl pt-14 sm:pt-6">
         
         {/* Header Section */}
-        <header className="flex justify-between items-start mb-6">
+        <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8">
           <div>
-            <h1 className="mb-1 text-2xl font-medium text-[#f0f0f0]">AI Writing Companion</h1>
-            <p className="text-sm text-[#999]">Enhance your text or get a quick laugh.</p>
+            <h1 className="mb-2 text-3xl font-bold tracking-tight text-white">
+              AI Writing Companion
+            </h1>
+            <p className="text-sm text-[#7DD3FC]/80 font-medium">
+              Enhance your text or get a quick laugh.
+            </p>
           </div>
           
-          {/* Generate Joke Button */}
           <button 
             onClick={generateJoke}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all active:scale-95 text-sm"
+            className="w-full sm:w-auto rounded-xl border-2 border-[#7DD3FC] bg-transparent px-5 py-2.5 text-sm font-bold text-[#7DD3FC] shadow-[0_0_15px_rgba(125,211,252,0.15)] transition-all hover:bg-[#7DD3FC] hover:text-[#082F49] hover:shadow-[0_0_20px_rgba(125,211,252,0.3)] active:scale-95"
           >
             Generate Joke 😂
           </button>
         </header>
 
-        {/* Input Textarea */}
-        <textarea
-          className="min-h-[120px] w-full resize-y rounded-xl border border-[#444] bg-[#2a2a2a] p-3 text-[15px] leading-relaxed text-[#e8e8e8] outline-none transition-colors focus:border-[#888]"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Paste your text here — an email, a message, a paragraph, anything..."
-        />
-        <div className="mt-1 text-right text-xs text-[#555]">{input.length} characters</div>
+        {/* Input Textarea Container */}
+        <div className="relative group">
+          <textarea
+            className="min-h-[140px] w-full resize-y rounded-2xl border border-white/10 bg-black/20 p-4 text-[15px] leading-relaxed text-white outline-none backdrop-blur-sm transition-all placeholder:text-slate-400 focus:border-[#7DD3FC] focus:bg-black/30 focus:ring-1 focus:ring-[#7DD3FC] shadow-inner"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Paste your text here — an email, a message, a paragraph, anything..."
+          />
+          <div className="absolute bottom-3 right-4 text-xs font-medium text-slate-400">
+            {input.length} characters
+          </div>
+        </div>
 
-        {/* Mode buttons */}
-        <div className="my-4 flex flex-wrap gap-2">
+        {/* Mode Buttons */}
+        <div className="my-6 flex flex-wrap gap-2.5">
           {MODES.map((m) => (
             <button
               key={m.id}
               onClick={() => setMode(m.id)}
-              className={`cursor-pointer rounded-lg border px-3.5 py-1.5 text-[13px] transition-all ${
-                mode === m.id ? "border-[#888] bg-[#333] font-medium text-[#f0f0f0]" : "border-[#444] bg-[#2a2a2a] text-[#999] hover:bg-[#333]"
+              className={`cursor-pointer rounded-xl border px-4 py-2 text-[13px] transition-all duration-200 ${
+                mode === m.id 
+                  ? "border-transparent bg-[#7DD3FC] font-bold text-[#082F49] shadow-[0_4px_14px_rgba(125,211,252,0.3)]" 
+                  : "border-white/10 bg-white/5 font-medium text-slate-300 hover:bg-white/10 hover:text-white"
               }`}
             >
               {m.label}
@@ -155,36 +161,52 @@ export default function AIWritingCompanion() {
           ))}
         </div>
 
-        {/* Transform button */}
+        {/* Primary Transform Button */}
         <button
-          className="mt-1 w-full rounded-lg border border-[#555] bg-[#333] p-2.5 text-[15px] font-medium text-[#f0f0f0] transition-all hover:bg-[#444] disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 w-full flex items-center justify-center gap-2 rounded-2xl border border-transparent bg-[#7DD3FC] p-4 text-[16px] font-extrabold text-[#082F49] shadow-[0_4px_20px_rgba(125,211,252,0.25)] transition-all hover:bg-[#bae6fd] hover:shadow-[0_6px_25px_rgba(125,211,252,0.4)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
           onClick={transform}
           disabled={loading || !input.trim()}
         >
-          {loading ? "Working..." : "Transform ↗"}
+          {loading ? "Processing Magic..." : "Transform Text ↗"}
         </button>
 
         {/* Result Area */}
         {(loading || result || error) && (
-          <div className="mt-6 min-h-20 rounded-xl border border-[#333] bg-[#2a2a2a] p-4">
-            <div className="mb-2 text-xs uppercase tracking-wide text-[#666]">
+          <div className="mt-8 min-h-[120px] rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-md shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#7DD3FC]/80">
+              <span className="w-2 h-2 rounded-full bg-[#7DD3FC]"></span>
               {mode === "joke" ? "Random Joke" : (MODES.find(m => m.id === mode)?.label || "Result")}
             </div>
 
             {loading && <LoadingDots />}
             
-            {error && <div className="text-[15px] leading-relaxed text-red-400">{error}</div>}
+            {error && <div className="text-[15px] font-medium leading-relaxed text-red-400 p-2 bg-red-400/10 rounded-lg">{error}</div>}
             
             {result && !loading && (
-              <>
-                <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e8e8]">{result}</div>
-                <button 
-                  className="mt-2.5 cursor-pointer rounded-lg border border-[#444] bg-transparent px-3 py-1.5 text-xs text-[#999] transition-colors hover:bg-[#333]" 
-                  onClick={copy}
-                >
-                  {copied ? "Copied!" : "Copy result"}
-                </button>
-              </>
+              <div className="animate-in fade-in duration-500">
+                <div className="whitespace-pre-wrap text-[16px] leading-relaxed text-slate-100 font-medium">
+                  {result}
+                </div>
+                <div className="mt-6 flex justify-end">
+                  <button 
+                    className={`flex items-center gap-1.5 rounded-lg border px-4 py-2 text-xs font-bold transition-all ${
+                      copied 
+                        ? "border-[#7DD3FC] bg-[#7DD3FC]/10 text-[#7DD3FC]" 
+                        : "border-white/20 bg-transparent text-slate-300 hover:bg-white/10 hover:text-white"
+                    }`}
+                    onClick={copy}
+                  >
+                    {copied ? (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                        Copied!
+                      </>
+                    ) : (
+                      "Copy Result"
+                    )}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}
