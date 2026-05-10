@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-
+import "./app.css";
 const MODES = [
   { id: "professional", label: "Make it professional" },
   { id: "casual",       label: "Make it casual" },
@@ -22,16 +22,24 @@ const MODE_PROMPTS = {
   persuasive:   "Rewrite the following text to be highly persuasive and compelling:",
 };
 
-// New constant for the Joke feature
-const JOKE_PROMPT = "Tell me a short, witty, and funny joke. No preamble, just the joke.";
+// List of themes to keep the jokes diverse
+const JOKE_THEMES = [
+  "programming", "pixel art", "space travel", "coffee", "dinosaurs", 
+  "time travel", "cats", "smartphones", "ocean life", "office work"
+];
 
+// Grabbing the Gemini key securely from Vite's environment variables
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 function LoadingDots() {
   return (
     <div className="flex items-center gap-1.5 py-2">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="w-2 h-2 rounded-full bg-neutral-500 animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+        <div 
+          key={i} 
+          className="w-2 h-2 rounded-full bg-neutral-500 animate-pulse" 
+          style={{ animationDelay: `${i * 0.2}s` }} 
+        />
       ))}
     </div>
   );
@@ -45,7 +53,7 @@ export default function AIWritingCompanion() {
   const [copied, setCopied]         = useState(false);
   const [error, setError]           = useState(null);
 
-  // Helper to call the API (Shared logic)
+  // Helper to call the API (Shared logic for both Transform and Joke features)
   const callGemini = async (promptText) => {
     setLoading(true);
     setResult(null);
@@ -61,6 +69,7 @@ export default function AIWritingCompanion() {
       });
 
       const data = await res.json();
+      
       if (data.error) throw new Error(data.error.message);
       
       const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -72,17 +81,26 @@ export default function AIWritingCompanion() {
     }
   };
 
-  // Logic for the text transformation (needs input)
+  // Logic for the text transformation (needs user input)
   const transform = () => {
     if (!input.trim()) return;
-    const fullPrompt = `${MODE_PROMPTS[mode]}\n\n---\n\n${input.trim()}\n\n---\n\nRespond with only the rewritten text.`;
+    const fullPrompt = `${MODE_PROMPTS[mode]}\n\n---\n\n${input.trim()}\n\n---\n\nRespond with only the rewritten text. No preamble, no quotes.`;
     callGemini(fullPrompt);
   };
 
-  // New logic for the Joke feature (no input needed)
+  // Logic for the Joke feature (no input needed, uses random themes)
   const generateJoke = () => {
-    setMode("joke"); // Just to update the label in the result box
-    callGemini(JOKE_PROMPT);
+    setMode("joke"); // Update the label in the result box
+    
+    // Pick a random theme
+    const randomTheme = JOKE_THEMES[Math.floor(Math.random() * JOKE_THEMES.length)];
+    
+    // Create a dynamic prompt to ensure a fresh response every time
+    const dynamicJokePrompt = `Tell me a unique, funny joke about ${randomTheme}. 
+    Random Seed: ${Date.now()}. 
+    No preamble, no "Sure! Here is a joke", just the joke itself.`;
+    
+    callGemini(dynamicJokePrompt);
   };
 
   const copy = useCallback(() => {
@@ -96,13 +114,15 @@ export default function AIWritingCompanion() {
   return (
     <div className="min-h-screen bg-[#1a1a1a] p-8 font-sans text-[#e8e8e8]">
       <div className="mx-auto max-w-2xl pt-6">
+        
+        {/* Header Section */}
         <header className="flex justify-between items-start mb-6">
           <div>
             <h1 className="mb-1 text-2xl font-medium text-[#f0f0f0]">AI Writing Companion</h1>
             <p className="text-sm text-[#999]">Enhance your text or get a quick laugh.</p>
           </div>
           
-          {/* New "Generate Joke" Button - Bold and Highlighted */}
+          {/* Generate Joke Button */}
           <button 
             onClick={generateJoke}
             className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all active:scale-95 text-sm"
@@ -111,14 +131,16 @@ export default function AIWritingCompanion() {
           </button>
         </header>
 
+        {/* Input Textarea */}
         <textarea
           className="min-h-[120px] w-full resize-y rounded-xl border border-[#444] bg-[#2a2a2a] p-3 text-[15px] leading-relaxed text-[#e8e8e8] outline-none transition-colors focus:border-[#888]"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Paste your text here..."
+          placeholder="Paste your text here — an email, a message, a paragraph, anything..."
         />
         <div className="mt-1 text-right text-xs text-[#555]">{input.length} characters</div>
 
+        {/* Mode buttons */}
         <div className="my-4 flex flex-wrap gap-2">
           {MODES.map((m) => (
             <button
@@ -133,6 +155,7 @@ export default function AIWritingCompanion() {
           ))}
         </div>
 
+        {/* Transform button */}
         <button
           className="mt-1 w-full rounded-lg border border-[#555] bg-[#333] p-2.5 text-[15px] font-medium text-[#f0f0f0] transition-all hover:bg-[#444] disabled:cursor-not-allowed disabled:opacity-50"
           onClick={transform}
@@ -141,6 +164,7 @@ export default function AIWritingCompanion() {
           {loading ? "Working..." : "Transform ↗"}
         </button>
 
+        {/* Result Area */}
         {(loading || result || error) && (
           <div className="mt-6 min-h-20 rounded-xl border border-[#333] bg-[#2a2a2a] p-4">
             <div className="mb-2 text-xs uppercase tracking-wide text-[#666]">
@@ -148,11 +172,16 @@ export default function AIWritingCompanion() {
             </div>
 
             {loading && <LoadingDots />}
+            
             {error && <div className="text-[15px] leading-relaxed text-red-400">{error}</div>}
+            
             {result && !loading && (
               <>
                 <div className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#e8e8e8]">{result}</div>
-                <button className="mt-2.5 cursor-pointer rounded-lg border border-[#444] bg-transparent px-3 py-1.5 text-xs text-[#999] transition-colors hover:bg-[#333]" onClick={copy}>
+                <button 
+                  className="mt-2.5 cursor-pointer rounded-lg border border-[#444] bg-transparent px-3 py-1.5 text-xs text-[#999] transition-colors hover:bg-[#333]" 
+                  onClick={copy}
+                >
                   {copied ? "Copied!" : "Copy result"}
                 </button>
               </>
